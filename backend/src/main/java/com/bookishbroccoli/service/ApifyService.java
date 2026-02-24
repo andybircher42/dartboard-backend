@@ -28,7 +28,15 @@ public class ApifyService {
 	@Value("${apify.api.token}")
 	private String apifyToken;
 
-	private static final String APIFY_API_BASE = "https://api.apify.com/v2";
+	@Value("${apify.api.base-url:https://api.apify.com/v2}")
+	private String apifyApiBase;
+
+	@Value("${apify.poll.interval-seconds:20}")
+	private int pollIntervalSeconds;
+
+	@Value("${apify.poll.timeout-seconds:300}")
+	private int pollTimeoutSeconds;
+
 	private static final int MAX_RETRIES = 3;
 	private static final long INITIAL_BACKOFF_MS = 10_000;
 	private static final long MAX_BACKOFF_MS = 60_000;
@@ -89,7 +97,7 @@ public class ApifyService {
 	 */
 	public JsonNode runTask(String taskId, String runType, Map<String, Object> input)
 			throws IOException, ParseException {
-		String url = String.format("%s/actor-tasks/%s/%s?token=%s", APIFY_API_BASE, taskId, runType, apifyToken);
+		String url = String.format("%s/actor-tasks/%s/%s?token=%s", apifyApiBase, taskId, runType, apifyToken);
 		logger.info("Running actor task: {}/{}", taskId, runType);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
@@ -118,7 +126,7 @@ public class ApifyService {
 	 * Fetches the current status string (e.g. "RUNNING", "SUCCEEDED") for the given run.
 	 */
 	public String getRunStatus(String runId) throws IOException, ParseException {
-		String url = String.format("%s/actor-runs/%s?token=%s", APIFY_API_BASE, runId, apifyToken);
+		String url = String.format("%s/actor-runs/%s?token=%s", apifyApiBase, runId, apifyToken);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 			HttpGet request = new HttpGet(url);
@@ -160,11 +168,9 @@ public class ApifyService {
 	 */
 	public String pollUntilComplete(String runId) throws Exception {
 		int elapsed = 0;
-		int pollInterval = 20;
-		int pollTimeout = 300;
 		int consecutiveErrors = 0;
 
-		while (elapsed < pollTimeout) {
+		while (elapsed < pollTimeoutSeconds) {
 			try {
 				String status = getRunStatus(runId);
 				consecutiveErrors = 0;
@@ -185,19 +191,19 @@ public class ApifyService {
 				}
 			}
 
-			Thread.sleep(pollInterval * 1000L);
-			elapsed += pollInterval;
+			Thread.sleep(pollIntervalSeconds * 1000L);
+			elapsed += pollIntervalSeconds;
 		}
 
-		logger.error("Polling timeout after {} seconds for run {}", pollTimeout, runId);
-		throw new RuntimeException("Polling timeout after " + pollTimeout + " seconds for run " + runId);
+		logger.error("Polling timeout after {} seconds for run {}", pollTimeoutSeconds, runId);
+		throw new RuntimeException("Polling timeout after " + pollTimeoutSeconds + " seconds for run " + runId);
 	}
 
 	/**
 	 * Fetches the dataset items for the given run, returning the first item if the result is an array.
 	 */
 	public JsonNode getRunResults(String runId) throws IOException, ParseException {
-		String url = String.format("%s/actor-runs/%s/dataset/items?token=%s", APIFY_API_BASE, runId, apifyToken);
+		String url = String.format("%s/actor-runs/%s/dataset/items?token=%s", apifyApiBase, runId, apifyToken);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 			HttpGet request = new HttpGet(url);
@@ -220,7 +226,7 @@ public class ApifyService {
 	 * Fetches the dataset items for the given run as a list, filtering out "no results" entries.
 	 */
 	public List<JsonNode> getRunResultsList(String runId) throws IOException, ParseException {
-		String url = String.format("%s/actor-runs/%s/dataset/items?token=%s", APIFY_API_BASE, runId, apifyToken);
+		String url = String.format("%s/actor-runs/%s/dataset/items?token=%s", apifyApiBase, runId, apifyToken);
 
 		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 			HttpGet request = new HttpGet(url);
