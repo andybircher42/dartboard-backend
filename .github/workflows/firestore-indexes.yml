@@ -1,0 +1,84 @@
+# Checks if Firestore query code changed without updating indexes,
+# then deploys indexes when firestore.indexes.json changes on main.
+# Check run status: GitHub repo > Actions tab > "Firestore Indexes"
+name: Firestore Indexes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/src/**/*.java"
+      - "backend/firestore.indexes.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/src/**/*.java"
+      - "backend/firestore.indexes.json"
+
+jobs:
+  check-indexes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if query changes need index updates
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=${{ github.event.pull_request.base.sha }}
+          else
+            BASE=HEAD~1
+          fi
+
+          QUERY_METHODS="whereEqualTo|whereNotEqualTo|whereGreaterThan|whereLessThan|whereIn|whereNotIn|whereArrayContains|orderBy"
+          DIFF=$(git diff "$BASE" -- 'backend/src/**/*.java')
+
+          # Check if any Java files have query-related additions (matches method prefix, e.g. whereGreaterThanOrEqualTo)
+          QUERY_CHANGED=$(echo "$DIFF" | grep -E "^\+" | grep -cE "\.(${QUERY_METHODS})" || true)
+
+          if [ "$QUERY_CHANGED" -eq 0 ]; then
+            echo "OK — no query method additions."
+            exit 0
+          fi
+
+          # Check if indexes file was also updated
+          INDEXES_CHANGED=$(git diff --name-only "$BASE" | grep -c "firestore.indexes.json" || true)
+
+          if [ "$INDEXES_CHANGED" -gt 0 ]; then
+            echo "OK — indexes file was also updated."
+            exit 0
+          fi
+
+          # Extract field names (first argument) from added and removed query lines.
+          # Handles .method(FIELD, ...) and .method("field", ...)
+          ADDED_FIELDS=$(echo "$DIFF" | grep -E "^\+" | grep -oE "\.(${QUERY_METHODS})[A-Za-z]*\(([^,)]+)" | sed 's/.*(\(.*\)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u)
+          REMOVED_FIELDS=$(echo "$DIFF" | grep -E "^-" | grep -oE "\.(${QUERY_METHODS})[A-Za-z]*\(([^,)]+)" | sed 's/.*(\(.*\)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u)
+
+          # Find fields in added lines that don't appear in removed lines
+          NEW_FIELDS=$(comm -23 <(echo "$ADDED_FIELDS") <(echo "$REMOVED_FIELDS"))
+
+          if [ -z "$NEW_FIELDS" ]; then
+            echo "OK — query methods changed but no new fields added (e.g. swapped method on same field)."
+            exit 0
+          fi
+
+          echo "New fields detected in query changes:"
+          echo "$NEW_FIELDS"
+          echo "::error::Firestore query methods reference new fields but firestore.indexes.json was not updated. Verify that no new composite indexes are needed."
+          exit 1
+
+  deploy-indexes:
+    if: github.event_name == 'push'
+    needs: check-indexes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Firestore indexes
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only firestore:indexes --project bookish-broccoli
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_PATH: backend
