@@ -1,5 +1,9 @@
 package com.bookishbroccoli.service;
 
+import com.bookishbroccoli.retry.NonRetryableException;
+import com.bookishbroccoli.retry.RetryExecutor;
+import com.bookishbroccoli.retry.RetryPolicy;
+import com.bookishbroccoli.retry.RetryResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -37,15 +41,15 @@ public class ApifyService {
 	@Value("${apify.poll.timeout-seconds:300}")
 	private int pollTimeoutSeconds;
 
-	private static final int MAX_RETRIES = 3;
-	private static final long INITIAL_BACKOFF_MS = 10_000;
-	private static final long MAX_BACKOFF_MS = 60_000;
 	private static final int MAX_CONSECUTIVE_POLL_ERRORS = 5;
+	private static final RetryPolicy RETRY_POLICY = RetryPolicy.of("apify-sync", 4);
 
 	private final ObjectMapper objectMapper;
+	private final RetryExecutor retryExecutor;
 
-	public ApifyService(ObjectMapper objectMapper) {
+	public ApifyService(ObjectMapper objectMapper, RetryExecutor retryExecutor) {
 		this.objectMapper = objectMapper;
+		this.retryExecutor = retryExecutor;
 	}
 
 	/**
@@ -60,27 +64,17 @@ public class ApifyService {
 	 * Retries transient failures with exponential backoff.
 	 */
 	public List<JsonNode> runTaskSyncWithRetry(String taskId, Map<String, Object> input) throws Exception {
-		ApifyRetryableException lastRetryable = null;
-
-		for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-			if (attempt > 0) {
-				long backoffMs = getRetryBackoffMs(attempt);
-				logger.warn("Retry attempt {}/{} for task {} after {}ms backoff", attempt, MAX_RETRIES, taskId, backoffMs);
-				Thread.sleep(backoffMs);
-			}
-
-			try {
-				return runTaskSync(taskId, input);
-			} catch (ApifyNonRetryableException e) {
-				throw e;
-			} catch (ApifyRetryableException e) {
-				lastRetryable = e;
-				logger.warn("Retryable error on attempt {}/{} for task {}: {}",
-						attempt + 1, MAX_RETRIES + 1, taskId, e.getMessage());
-			}
+		RetryResult<List<JsonNode>> result = retryExecutor.execute(
+				RETRY_POLICY, () -> runTaskSync(taskId, input));
+		if (result.succeeded()) {
+			return result.value();
 		}
-
-		throw new RuntimeException("All " + (MAX_RETRIES + 1) + " attempts exhausted for task " + taskId, lastRetryable);
+		if (result.lastException() instanceof NonRetryableException) {
+			throw result.lastException();
+		}
+		throw new RuntimeException(
+				"All " + result.attempts() + " attempts exhausted for task " + taskId,
+				result.lastException());
 	}
 
 	/**
@@ -239,11 +233,6 @@ public class ApifyService {
 				return toList(root);
 			}
 		}
-	}
-
-	/** Package-private so tests can override to avoid sleeps. */
-	long getRetryBackoffMs(int attempt) {
-		return Math.min(INITIAL_BACKOFF_MS * (1L << (attempt - 1)), MAX_BACKOFF_MS);
 	}
 
 	private void checkHttpStatus(int statusCode, String responseBody) {

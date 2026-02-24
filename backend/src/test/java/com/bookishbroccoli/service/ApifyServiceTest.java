@@ -1,5 +1,6 @@
 package com.bookishbroccoli.service;
 
+import com.bookishbroccoli.retry.RetryExecutor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -29,23 +30,11 @@ class ApifyServiceTest {
 
 	@BeforeEach
 	void setUp() throws Exception {
-		service = new TestableApifyService(objectMapper);
+		service = new ApifyService(objectMapper, new RetryExecutor(ms -> {}));
 		setField(service, "apifyToken", "test-token");
 		setField(service, "apifyApiBase", wireMock.baseUrl());
 		setField(service, "pollIntervalSeconds", 1);
 		setField(service, "pollTimeoutSeconds", 5);
-	}
-
-	/** Subclass that eliminates real sleeps for retry/poll tests. */
-	static class TestableApifyService extends ApifyService {
-		TestableApifyService(ObjectMapper objectMapper) {
-			super(objectMapper);
-		}
-
-		@Override
-		long getRetryBackoffMs(int attempt) {
-			return 10;
-		}
 	}
 
 	private static void setField(Object target, String fieldName, Object value) throws Exception {
@@ -657,30 +646,6 @@ class ApifyServiceTest {
 
 			assertThrows(ApifyRetryableException.class,
 					() -> service.getRunResultsList("run123"));
-		}
-	}
-
-	// ==================== getRetryBackoffMs ====================
-
-	@Nested
-	class RetryBackoff {
-
-		@Test
-		void exponentialBackoff() {
-			// Use a fresh non-testable instance to test real backoff logic
-			ApifyService realService = new ApifyService(objectMapper);
-
-			assertEquals(10_000, realService.getRetryBackoffMs(1));  // 10000 * 2^0
-			assertEquals(20_000, realService.getRetryBackoffMs(2));  // 10000 * 2^1
-			assertEquals(40_000, realService.getRetryBackoffMs(3));  // 10000 * 2^2
-		}
-
-		@Test
-		void cappedAtMaxBackoff() {
-			ApifyService realService = new ApifyService(objectMapper);
-
-			assertEquals(60_000, realService.getRetryBackoffMs(4));  // 10000 * 2^3 = 80000 capped to 60000
-			assertEquals(60_000, realService.getRetryBackoffMs(10)); // way over cap
 		}
 	}
 

@@ -25,7 +25,7 @@ public class RetryExecutor {
 		});
 	}
 
-	RetryExecutor(LongConsumer sleeper) {
+	public RetryExecutor(LongConsumer sleeper) {
 		this.sleeper = sleeper;
 	}
 
