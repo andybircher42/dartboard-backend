@@ -35,7 +35,7 @@ class CheckMostRecentTest {
 
 		assertTrue(result.isPresent());
 		assertTrue(result.get().isFresh());
-		assertEquals(recent, result.get().timestamp());
+		assertEquals(recent, result.get().timestamp().orElseThrow());
 	}
 
 	@Test

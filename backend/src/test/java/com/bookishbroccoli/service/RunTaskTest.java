@@ -43,7 +43,7 @@ class RunTaskTest extends ApifyServiceTestBase {
 				() -> service.runTask("my~task", "runs", Map.of()));
 
 		assertEquals(429, ex.getStatusCode());
-		assertEquals("rate limited", ex.getResponseBody());
+		assertEquals("rate limited", ex.getResponseBody().orElseThrow());
 	}
 
 	@Test

@@ -23,9 +23,9 @@ class FreshnessResultTest {
 		Duration age = Duration.ofHours(2);
 		FreshnessResult result = FreshnessResult.fresh(ts, age);
 
-		assertEquals(ts, result.timestamp());
-		assertEquals(age, result.age());
-		assertNull(result.reason());
+		assertEquals(ts, result.timestamp().orElseThrow());
+		assertEquals(age, result.age().orElseThrow());
+		assertTrue(result.reason().isEmpty());
 	}
 
 	@Test
@@ -33,9 +33,9 @@ class FreshnessResultTest {
 		FreshnessResult result = FreshnessResult.stale("no timestamp available");
 
 		assertTrue(result.stale());
-		assertNull(result.timestamp());
-		assertNull(result.age());
-		assertEquals("no timestamp available", result.reason());
+		assertTrue(result.timestamp().isEmpty());
+		assertTrue(result.age().isEmpty());
+		assertEquals("no timestamp available", result.reason().orElseThrow());
 	}
 
 	@Test
@@ -52,9 +52,9 @@ class FreshnessResultTest {
 		FreshnessResult result = FreshnessResult.stale(ts, age, "too old");
 
 		assertTrue(result.stale());
-		assertNotNull(result.timestamp());
-		assertNotNull(result.age());
-		assertEquals("too old", result.reason());
+		assertTrue(result.timestamp().isPresent());
+		assertTrue(result.age().isPresent());
+		assertEquals("too old", result.reason().orElseThrow());
 	}
 
 	@Test
@@ -63,8 +63,8 @@ class FreshnessResultTest {
 		Duration age = Duration.ofDays(15);
 		FreshnessResult result = FreshnessResult.stale(ts, age, "expired");
 
-		assertEquals(ts, result.timestamp());
-		assertEquals(age, result.age());
+		assertEquals(ts, result.timestamp().orElseThrow());
+		assertEquals(age, result.age().orElseThrow());
 	}
 
 	@Test

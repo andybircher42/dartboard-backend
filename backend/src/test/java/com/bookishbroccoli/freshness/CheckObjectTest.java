@@ -67,6 +67,6 @@ class CheckObjectTest {
 		FreshnessResult result = checker.check((Object) 42, policy);
 
 		assertTrue(result.stale());
-		assertTrue(result.reason().contains("unsupported"));
+		assertTrue(result.reason().orElseThrow().contains("unsupported"));
 	}
 }

@@ -72,6 +72,6 @@ class CheckStringTest {
 		FreshnessResult result = checker.check("not-a-date", policy);
 
 		assertTrue(result.stale());
-		assertTrue(result.reason().contains("unparseable"));
+		assertTrue(result.reason().orElseThrow().contains("unparseable"));
 	}
 }

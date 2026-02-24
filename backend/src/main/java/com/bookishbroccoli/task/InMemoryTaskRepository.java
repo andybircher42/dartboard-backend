@@ -35,19 +35,17 @@ public class InMemoryTaskRepository implements TaskRepository {
 
 	@Override
 	public void complete(String taskId, int resultCount) {
-		TaskRecord task = tasks.get(taskId);
-		if (task != null) {
+		Optional.ofNullable(tasks.get(taskId)).ifPresent(task -> {
 			task.setStatus(TaskStatus.COMPLETED);
 			task.setCompletedAt(Instant.now());
 			task.setResultCount(resultCount);
 			task.setWorkerId(null);
-		}
+		});
 	}
 
 	@Override
 	public void fail(String taskId, String error, boolean shouldRetry) {
-		TaskRecord task = tasks.get(taskId);
-		if (task != null) {
+		Optional.ofNullable(tasks.get(taskId)).ifPresent(task -> {
 			task.setError(error);
 			task.setWorkerId(null);
 			if (shouldRetry && task.getAttempts() < task.getMaxAttempts()) {
@@ -56,18 +54,17 @@ public class InMemoryTaskRepository implements TaskRepository {
 				task.setStatus(TaskStatus.FAILED);
 				task.setCompletedAt(Instant.now());
 			}
-		}
+		});
 	}
 
 	@Override
 	public void failPermanently(String taskId, String error) {
-		TaskRecord task = tasks.get(taskId);
-		if (task != null) {
+		Optional.ofNullable(tasks.get(taskId)).ifPresent(task -> {
 			task.setStatus(TaskStatus.FAILED);
 			task.setError(error);
 			task.setCompletedAt(Instant.now());
 			task.setWorkerId(null);
-		}
+		});
 	}
 
 	@Override

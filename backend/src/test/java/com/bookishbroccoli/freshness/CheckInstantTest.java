@@ -29,8 +29,8 @@ class CheckInstantTest {
 		FreshnessResult result = checker.check(recent, policy);
 
 		assertTrue(result.isFresh());
-		assertEquals(recent, result.timestamp());
-		assertEquals(Duration.ofHours(6), result.age());
+		assertEquals(recent, result.timestamp().orElseThrow());
+		assertEquals(Duration.ofHours(6), result.age().orElseThrow());
 	}
 
 	@Test
@@ -39,8 +39,8 @@ class CheckInstantTest {
 		FreshnessResult result = checker.check(old, policy);
 
 		assertTrue(result.stale());
-		assertEquals(old, result.timestamp());
-		assertNotNull(result.reason());
+		assertEquals(old, result.timestamp().orElseThrow());
+		assertTrue(result.reason().isPresent());
 	}
 
 	@Test
@@ -56,8 +56,8 @@ class CheckInstantTest {
 		FreshnessResult result = checker.check((Instant) null, policy);
 
 		assertTrue(result.stale());
-		assertNull(result.timestamp());
-		assertEquals("no timestamp available", result.reason());
+		assertTrue(result.timestamp().isEmpty());
+		assertEquals("no timestamp available", result.reason().orElseThrow());
 	}
 
 	@Test
@@ -74,6 +74,6 @@ class CheckInstantTest {
 		FreshnessResult result = checker.check(future, policy);
 
 		assertTrue(result.isFresh());
-		assertEquals(Duration.ZERO, result.age());
+		assertEquals(Duration.ZERO, result.age().orElseThrow());
 	}
 }

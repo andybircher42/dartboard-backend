@@ -2,6 +2,8 @@ package com.bookishbroccoli.service;
 
 import com.bookishbroccoli.retry.NonRetryableException;
 
+import java.util.Optional;
+
 /**
  * Thrown for permanent Apify errors that should NOT be retried:
  * HTTP 400 (bad request), 401 (unauthorized), 404 (not found),
@@ -28,7 +30,7 @@ public class ApifyNonRetryableException extends NonRetryableException {
 		return statusCode;
 	}
 
-	public String getResponseBody() {
-		return responseBody;
+	public Optional<String> getResponseBody() {
+		return Optional.ofNullable(responseBody);
 	}
 }

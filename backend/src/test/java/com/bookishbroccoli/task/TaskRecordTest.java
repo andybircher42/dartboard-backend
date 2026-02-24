@@ -17,12 +17,12 @@ class TaskRecordTest {
 		assertEquals("val", record.getPayload().get("key"));
 		assertEquals(TaskStatus.PENDING, record.getStatus());
 		assertNotNull(record.getCreatedAt());
-		assertNull(record.getStartedAt());
-		assertNull(record.getCompletedAt());
+		assertTrue(record.getStartedAt().isEmpty());
+		assertTrue(record.getCompletedAt().isEmpty());
 		assertEquals(0, record.getAttempts());
 		assertEquals(3, record.getMaxAttempts());
-		assertNull(record.getError());
-		assertNull(record.getWorkerId());
+		assertTrue(record.getError().isEmpty());
+		assertTrue(record.getWorkerId().isEmpty());
 		assertEquals(0, record.getResultCount());
 	}
 

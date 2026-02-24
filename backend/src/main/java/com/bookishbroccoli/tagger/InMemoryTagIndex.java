@@ -24,8 +24,7 @@ public class InMemoryTagIndex implements TagIndex {
 
 	@Override
 	public synchronized void remove(String itemId) {
-		Set<Tag> tags = itemToTags.remove(itemId);
-		if (tags != null) {
+		Optional.ofNullable(itemToTags.remove(itemId)).ifPresent(tags -> {
 			for (Tag tag : tags) {
 				Set<String> items = tagToItems.get(tag.getName());
 				if (items != null) {
@@ -35,18 +34,16 @@ public class InMemoryTagIndex implements TagIndex {
 					}
 				}
 			}
-		}
+		});
 	}
 
 	@Override
 	public Set<String> getItemsByTag(Tag tag, int limit) {
-		Set<String> items = tagToItems.get(tag.getName());
-		if (items == null) {
-			return Set.of();
-		}
-		return items.stream()
-				.limit(limit)
-				.collect(Collectors.toCollection(LinkedHashSet::new));
+		return Optional.ofNullable(tagToItems.get(tag.getName()))
+				.<Set<String>>map(items -> items.stream()
+						.limit(limit)
+						.collect(Collectors.toCollection(LinkedHashSet::new)))
+				.orElse(Set.of());
 	}
 
 	@Override

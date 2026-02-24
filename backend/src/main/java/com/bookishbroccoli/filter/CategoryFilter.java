@@ -52,12 +52,12 @@ public class CategoryFilter implements FilterRule {
 			return true;
 		}
 
-		JsonNode valueNode = RangeFilter.resolveField(item, fieldPath);
-		if (valueNode == null || !valueNode.isTextual()) {
+		Optional<JsonNode> valueNode = RangeFilter.resolveField(item, fieldPath);
+		if (valueNode.isEmpty() || !valueNode.get().isTextual()) {
 			return true;
 		}
 
-		return allowedValues.contains(valueNode.asText().toUpperCase());
+		return allowedValues.contains(valueNode.get().asText().toUpperCase());
 	}
 
 	static Set<String> expandAliases(String categories, Map<String, List<String>> aliasMap) {
@@ -67,12 +67,11 @@ public class CategoryFilter implements FilterRule {
 		}
 		for (String token : categories.split(",")) {
 			String key = token.trim().toLowerCase();
-			List<String> mapped = aliasMap.get(key);
-			if (mapped != null) {
-				for (String v : mapped) {
+			Optional.ofNullable(aliasMap.get(key)).ifPresent(values -> {
+				for (String v : values) {
 					expanded.add(v.toUpperCase());
 				}
-			}
+			});
 		}
 		return expanded;
 	}

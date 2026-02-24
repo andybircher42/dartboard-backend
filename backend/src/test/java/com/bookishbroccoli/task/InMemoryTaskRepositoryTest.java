@@ -43,9 +43,9 @@ class InMemoryTaskRepositoryTest {
 		assertTrue(claimed.isPresent());
 		assertEquals(task1.getId(), claimed.get().getId());
 		assertEquals(TaskStatus.PROCESSING, claimed.get().getStatus());
-		assertEquals("worker-1", claimed.get().getWorkerId());
+		assertEquals("worker-1", claimed.get().getWorkerId().orElseThrow());
 		assertEquals(1, claimed.get().getAttempts());
-		assertNotNull(claimed.get().getStartedAt());
+		assertTrue(claimed.get().getStartedAt().isPresent());
 	}
 
 	@Test
@@ -86,8 +86,8 @@ class InMemoryTaskRepositoryTest {
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.COMPLETED, updated.getStatus());
 		assertEquals(42, updated.getResultCount());
-		assertNotNull(updated.getCompletedAt());
-		assertNull(updated.getWorkerId());
+		assertTrue(updated.getCompletedAt().isPresent());
+		assertTrue(updated.getWorkerId().isEmpty());
 	}
 
 	@Test
@@ -100,8 +100,8 @@ class InMemoryTaskRepositoryTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.PENDING, updated.getStatus());
-		assertEquals("transient error", updated.getError());
-		assertNull(updated.getWorkerId());
+		assertEquals("transient error", updated.getError().orElseThrow());
+		assertTrue(updated.getWorkerId().isEmpty());
 	}
 
 	@Test
@@ -114,8 +114,8 @@ class InMemoryTaskRepositoryTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.FAILED, updated.getStatus());
-		assertEquals("final error", updated.getError());
-		assertNotNull(updated.getCompletedAt());
+		assertEquals("final error", updated.getError().orElseThrow());
+		assertTrue(updated.getCompletedAt().isPresent());
 	}
 
 	@Test
@@ -128,9 +128,9 @@ class InMemoryTaskRepositoryTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.FAILED, updated.getStatus());
-		assertEquals("non-retryable error", updated.getError());
-		assertNotNull(updated.getCompletedAt());
-		assertNull(updated.getWorkerId());
+		assertEquals("non-retryable error", updated.getError().orElseThrow());
+		assertTrue(updated.getCompletedAt().isPresent());
+		assertTrue(updated.getWorkerId().isEmpty());
 	}
 
 	@Test
@@ -214,7 +214,7 @@ class InMemoryTaskRepositoryTest {
 		assertEquals(2, reset);
 		assertEquals(TaskStatus.PENDING, repo.findById(processing1.getId()).get().getStatus());
 		assertEquals(TaskStatus.PENDING, repo.findById(processing2.getId()).get().getStatus());
-		assertNull(repo.findById(processing1.getId()).get().getWorkerId());
+		assertTrue(repo.findById(processing1.getId()).get().getWorkerId().isEmpty());
 		assertEquals(TaskStatus.PENDING, repo.findById(pending.getId()).get().getStatus());
 	}
 

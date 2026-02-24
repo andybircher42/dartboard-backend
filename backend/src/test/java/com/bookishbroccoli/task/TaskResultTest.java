@@ -12,7 +12,7 @@ class TaskResultTest {
 
 		assertTrue(result.succeeded());
 		assertEquals(42, result.resultCount());
-		assertNull(result.error());
+		assertTrue(result.error().isEmpty());
 	}
 
 	@Test
@@ -21,7 +21,7 @@ class TaskResultTest {
 
 		assertTrue(result.succeeded());
 		assertEquals(0, result.resultCount());
-		assertNull(result.error());
+		assertTrue(result.error().isEmpty());
 	}
 
 	@Test
@@ -30,6 +30,6 @@ class TaskResultTest {
 
 		assertFalse(result.succeeded());
 		assertEquals(0, result.resultCount());
-		assertEquals("something broke", result.error());
+		assertEquals("something broke", result.error().orElseThrow());
 	}
 }

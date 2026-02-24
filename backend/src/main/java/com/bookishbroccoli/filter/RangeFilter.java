@@ -2,6 +2,8 @@ package com.bookishbroccoli.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.Optional;
+
 /**
  * Filters items by a numeric field within an inclusive [min, max] range.
  * Supports dot-separated field paths for nested objects (e.g. "details.price").
@@ -22,12 +24,12 @@ public class RangeFilter implements FilterRule {
 
 	@Override
 	public boolean matches(JsonNode item) {
-		JsonNode valueNode = resolveField(item, fieldPath);
-		if (valueNode == null || !valueNode.isNumber()) {
+		Optional<JsonNode> valueNode = resolveField(item, fieldPath);
+		if (valueNode.isEmpty() || !valueNode.get().isNumber()) {
 			return true;
 		}
 
-		double value = valueNode.doubleValue();
+		double value = valueNode.get().doubleValue();
 		if (min != null && value < min) {
 			return false;
 		}
@@ -37,15 +39,15 @@ public class RangeFilter implements FilterRule {
 		return true;
 	}
 
-	static JsonNode resolveField(JsonNode node, String path) {
+	static Optional<JsonNode> resolveField(JsonNode node, String path) {
 		JsonNode current = node;
 		for (String segment : path.split("\\.")) {
 			if (current == null || current.isMissingNode()) {
-				return null;
+				return Optional.empty();
 			}
 			current = current.get(segment);
 		}
-		return current;
+		return Optional.ofNullable(current);
 	}
 
 	public String getFieldPath() {

@@ -2,6 +2,8 @@ package com.bookishbroccoli.service;
 
 import com.bookishbroccoli.retry.RetryableException;
 
+import java.util.Optional;
+
 /**
  * Thrown for transient Apify errors that should be retried:
  * HTTP 429 (rate limit), 5xx (server errors), and network failures (IOException).
@@ -27,7 +29,7 @@ public class ApifyRetryableException extends RetryableException {
 		return statusCode;
 	}
 
-	public String getResponseBody() {
-		return responseBody;
+	public Optional<String> getResponseBody() {
+		return Optional.ofNullable(responseBody);
 	}
 }

@@ -28,15 +28,15 @@ class InMemoryJobTrackerTest {
 		assertEquals("ext-123", job.getExternalId());
 		assertEquals(JobStatus.RUNNING, job.getStatus());
 		assertNotNull(job.getStartedAt());
-		assertEquals("api", job.getMetadata().get("source"));
+		assertEquals("api", job.getMetadata().orElseThrow().get("source"));
 	}
 
 	@Test
 	void start_nullMetadata() {
 		JobRecord job = tracker.start("test", null, null);
 
-		assertNotNull(job.getMetadata());
-		assertTrue(job.getMetadata().isEmpty());
+		assertTrue(job.getMetadata().isPresent());
+		assertTrue(job.getMetadata().orElseThrow().isEmpty());
 	}
 
 	@Test
@@ -48,7 +48,7 @@ class InMemoryJobTrackerTest {
 		JobRecord updated = tracker.findById(job.getId()).orElseThrow();
 		assertEquals(JobStatus.SUCCEEDED, updated.getStatus());
 		assertEquals(42, updated.getResultCount());
-		assertNotNull(updated.getFinishedAt());
+		assertTrue(updated.getFinishedAt().isPresent());
 	}
 
 	@Test
@@ -59,8 +59,8 @@ class InMemoryJobTrackerTest {
 
 		JobRecord updated = tracker.findById(job.getId()).orElseThrow();
 		assertEquals(JobStatus.FAILED, updated.getStatus());
-		assertEquals("connection timeout", updated.getError());
-		assertNotNull(updated.getFinishedAt());
+		assertEquals("connection timeout", updated.getError().orElseThrow());
+		assertTrue(updated.getFinishedAt().isPresent());
 	}
 
 	@Test

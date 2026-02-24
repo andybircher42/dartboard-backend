@@ -3,6 +3,7 @@ package com.bookishbroccoli.task;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class TaskRecord {
@@ -27,7 +28,7 @@ public class TaskRecord {
 		TaskRecord record = new TaskRecord();
 		record.id = UUID.randomUUID().toString();
 		record.taskType = taskType;
-		record.payload = payload != null ? new LinkedHashMap<>(payload) : new LinkedHashMap<>();
+		record.payload = Optional.ofNullable(payload).map(LinkedHashMap::new).orElseGet(LinkedHashMap::new);
 		record.status = TaskStatus.PENDING;
 		record.createdAt = Instant.now();
 		record.attempts = 0;
@@ -40,14 +41,14 @@ public class TaskRecord {
 		map.put("id", id);
 		map.put("taskType", taskType);
 		map.put("payload", payload);
-		map.put("status", status != null ? status.value() : null);
-		map.put("createdAt", createdAt != null ? createdAt.toString() : null);
-		map.put("startedAt", startedAt != null ? startedAt.toString() : null);
-		map.put("completedAt", completedAt != null ? completedAt.toString() : null);
+		map.put("status", Optional.ofNullable(status).map(TaskStatus::value).orElse(null));
+		map.put("createdAt", Optional.ofNullable(createdAt).map(Instant::toString).orElse(null));
+		map.put("startedAt", getStartedAt().map(Instant::toString).orElse(null));
+		map.put("completedAt", getCompletedAt().map(Instant::toString).orElse(null));
 		map.put("attempts", attempts);
 		map.put("maxAttempts", maxAttempts);
-		map.put("error", error);
-		map.put("workerId", workerId);
+		map.put("error", getError().orElse(null));
+		map.put("workerId", getWorkerId().orElse(null));
 		map.put("resultCount", resultCount);
 		return map;
 	}
@@ -94,16 +95,16 @@ public class TaskRecord {
 		this.createdAt = createdAt;
 	}
 
-	public Instant getStartedAt() {
-		return startedAt;
+	public Optional<Instant> getStartedAt() {
+		return Optional.ofNullable(startedAt);
 	}
 
 	public void setStartedAt(Instant startedAt) {
 		this.startedAt = startedAt;
 	}
 
-	public Instant getCompletedAt() {
-		return completedAt;
+	public Optional<Instant> getCompletedAt() {
+		return Optional.ofNullable(completedAt);
 	}
 
 	public void setCompletedAt(Instant completedAt) {
@@ -126,16 +127,16 @@ public class TaskRecord {
 		this.maxAttempts = maxAttempts;
 	}
 
-	public String getError() {
-		return error;
+	public Optional<String> getError() {
+		return Optional.ofNullable(error);
 	}
 
 	public void setError(String error) {
 		this.error = error;
 	}
 
-	public String getWorkerId() {
-		return workerId;
+	public Optional<String> getWorkerId() {
+		return Optional.ofNullable(workerId);
 	}
 
 	public void setWorkerId(String workerId) {

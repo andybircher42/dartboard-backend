@@ -117,7 +117,7 @@ class TaskProcessorTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.PENDING, updated.getStatus());
-		assertEquals("transient error", updated.getError());
+		assertEquals("transient error", updated.getError().orElseThrow());
 	}
 
 	@Test
@@ -143,7 +143,7 @@ class TaskProcessorTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.FAILED, updated.getStatus());
-		assertNotNull(updated.getCompletedAt());
+		assertTrue(updated.getCompletedAt().isPresent());
 	}
 
 	@Test
@@ -160,7 +160,7 @@ class TaskProcessorTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.FAILED, updated.getStatus());
-		assertTrue(updated.getError().contains("No handler registered"));
+		assertTrue(updated.getError().orElseThrow().contains("No handler registered"));
 	}
 
 	@Test
@@ -201,7 +201,7 @@ class TaskProcessorTest {
 
 		TaskRecord updated = repo.findById(task.getId()).get();
 		assertEquals(TaskStatus.PENDING, updated.getStatus());
-		assertEquals("unexpected error", updated.getError());
+		assertEquals("unexpected error", updated.getError().orElseThrow());
 	}
 
 	@Test

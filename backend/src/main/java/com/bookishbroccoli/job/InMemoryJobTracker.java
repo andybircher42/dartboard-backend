@@ -23,23 +23,21 @@ public class InMemoryJobTracker implements JobTracker {
 
 	@Override
 	public void complete(String jobId, int resultCount) {
-		JobRecord job = jobs.get(jobId);
-		if (job != null) {
+		Optional.ofNullable(jobs.get(jobId)).ifPresent(job -> {
 			job.setStatus(JobStatus.SUCCEEDED);
 			job.setFinishedAt(Instant.now());
 			job.setResultCount(resultCount);
 			lastSuccessful.put(job.getJobType(), job);
-		}
+		});
 	}
 
 	@Override
 	public void fail(String jobId, String error) {
-		JobRecord job = jobs.get(jobId);
-		if (job != null) {
+		Optional.ofNullable(jobs.get(jobId)).ifPresent(job -> {
 			job.setStatus(JobStatus.FAILED);
 			job.setFinishedAt(Instant.now());
 			job.setError(error);
-		}
+		});
 	}
 
 	@Override
@@ -72,14 +70,14 @@ public class InMemoryJobTracker implements JobTracker {
 
 	@Override
 	public boolean isStale(String jobType, Duration maxAge) {
-		JobRecord last = lastSuccessful.get(jobType);
-		if (last != null && last.getFinishedAt() != null) {
-			return last.getFinishedAt().plus(maxAge).isBefore(Instant.now());
-		}
-		// No successful run — check if one is currently running
-		boolean hasRunning = jobs.values().stream()
-				.anyMatch(j -> j.getJobType().equals(jobType) && j.getStatus() == JobStatus.RUNNING);
-		return !hasRunning;
+		return Optional.ofNullable(lastSuccessful.get(jobType))
+				.flatMap(last -> last.getFinishedAt().map(ft -> ft.plus(maxAge).isBefore(Instant.now())))
+				.orElseGet(() -> {
+					// No successful run — check if one is currently running
+					boolean hasRunning = jobs.values().stream()
+							.anyMatch(j -> j.getJobType().equals(jobType) && j.getStatus() == JobStatus.RUNNING);
+					return !hasRunning;
+				});
 	}
 
 	public void clear() {

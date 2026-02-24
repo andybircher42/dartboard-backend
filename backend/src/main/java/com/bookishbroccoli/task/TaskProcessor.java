@@ -84,7 +84,7 @@ public class TaskProcessor {
 				try {
 					processTask(task);
 				} finally {
-					activeWorkers.remove(task.getWorkerId() != null ? task.getWorkerId() : workerId);
+					activeWorkers.remove(task.getWorkerId().orElse(workerId));
 				}
 			});
 		}
@@ -107,8 +107,8 @@ public class TaskProcessor {
 				repository.complete(task.getId(), result.resultCount());
 				log.info("Task {} completed with {} results", task.getId(), result.resultCount());
 			} else {
-				repository.fail(task.getId(), result.error(), true);
-				log.warn("Task {} failed: {}", task.getId(), result.error());
+				repository.fail(task.getId(), result.error().orElse(null), true);
+				log.warn("Task {} failed: {}", task.getId(), result.error().orElse("unknown"));
 			}
 		} catch (NonRetryableException e) {
 			repository.failPermanently(task.getId(), e.getMessage());

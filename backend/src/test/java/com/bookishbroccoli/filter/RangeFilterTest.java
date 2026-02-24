@@ -102,7 +102,7 @@ class RangeFilterTest {
 		ObjectNode node = objectMapper.createObjectNode();
 		node.put("name", "test");
 
-		assertEquals("test", RangeFilter.resolveField(node, "name").asText());
+		assertEquals("test", RangeFilter.resolveField(node, "name").orElseThrow().asText());
 	}
 
 	@Test
@@ -112,7 +112,7 @@ class RangeFilterTest {
 		inner.put("value", 42);
 		node.set("outer", inner);
 
-		assertEquals(42, RangeFilter.resolveField(node, "outer.value").asInt());
+		assertEquals(42, RangeFilter.resolveField(node, "outer.value").orElseThrow().asInt());
 	}
 
 	@Test
@@ -124,7 +124,7 @@ class RangeFilterTest {
 		a.set("b", b);
 		node.set("a", a);
 
-		assertEquals("deep", RangeFilter.resolveField(node, "a.b.c").asText());
+		assertEquals("deep", RangeFilter.resolveField(node, "a.b.c").orElseThrow().asText());
 	}
 
 	@Test
@@ -132,7 +132,7 @@ class RangeFilterTest {
 		ObjectNode node = objectMapper.createObjectNode();
 		node.put("name", "test");
 
-		assertNull(RangeFilter.resolveField(node, "missing"));
+		assertTrue(RangeFilter.resolveField(node, "missing").isEmpty());
 	}
 
 	@Test
@@ -140,6 +140,6 @@ class RangeFilterTest {
 		ObjectNode node = objectMapper.createObjectNode();
 		node.put("name", "test");
 
-		assertNull(RangeFilter.resolveField(node, "a.b.c"));
+		assertTrue(RangeFilter.resolveField(node, "a.b.c").isEmpty());
 	}
 }
