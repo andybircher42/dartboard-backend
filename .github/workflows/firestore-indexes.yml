@@ -68,8 +68,11 @@ jobs:
           echo "::error::Firestore query methods reference new fields but firestore.indexes.json was not updated. Verify that no new composite indexes are needed."
           exit 1
 
+  # Deploy is disabled until a Firestore project is configured.
+  # To enable: replace `if: false` with `if: github.event_name == 'push'`
+  # and set the FIREBASE_TOKEN secret in the repo.
   deploy-indexes:
-    if: github.event_name == 'push'
+    if: false
     needs: check-indexes
     runs-on: ubuntu-latest
     steps:
