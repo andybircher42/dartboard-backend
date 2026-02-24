@@ -115,7 +115,7 @@ public class ApifyService {
 				logger.info("Run for task {} returned response", taskId);
 				return root;
 			}
-		} catch (ApifyApiException e) {
+		} catch (ApifyRetryableException | ApifyNonRetryableException e) {
 			throw e;
 		} catch (IOException e) {
 			throw new ApifyRetryableException("Network error during runTask: " + e.getMessage(), e);
@@ -246,7 +246,7 @@ public class ApifyService {
 		return Math.min(INITIAL_BACKOFF_MS * (1L << (attempt - 1)), MAX_BACKOFF_MS);
 	}
 
-	private void checkHttpStatus(int statusCode, String responseBody) throws ApifyApiException {
+	private void checkHttpStatus(int statusCode, String responseBody) {
 		if (statusCode >= 200 && statusCode <= 299) {
 			return;
 		}

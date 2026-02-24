@@ -1,6 +1,6 @@
 package com.bookishbroccoli.task;
 
-import com.bookishbroccoli.service.ApifyNonRetryableException;
+import com.bookishbroccoli.retry.NonRetryableException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -110,7 +110,7 @@ public class TaskProcessor {
 				repository.fail(task.getId(), result.error(), true);
 				log.warn("Task {} failed: {}", task.getId(), result.error());
 			}
-		} catch (ApifyNonRetryableException e) {
+		} catch (NonRetryableException e) {
 			repository.failPermanently(task.getId(), e.getMessage());
 			log.error("Task {} failed permanently: {}", task.getId(), e.getMessage());
 		} catch (Exception e) {
