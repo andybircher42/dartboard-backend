@@ -62,7 +62,7 @@ public class RangeFilter implements FilterRule {
    */
   static Optional<JsonNode> resolveField(JsonNode node, String path) {
     JsonNode current = node;
-    for (String segment : path.split("\\.")) {
+    for (String segment : path.split("\\.", -1)) {
       if (current == null || current.isMissingNode()) {
         return Optional.empty();
       }

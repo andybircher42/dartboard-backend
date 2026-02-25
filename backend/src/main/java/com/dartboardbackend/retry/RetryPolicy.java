@@ -99,7 +99,7 @@ public class RetryPolicy {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof RetryPolicy)) return false;
     RetryPolicy that = (RetryPolicy) o;
     return Objects.equals(name, that.name);
   }

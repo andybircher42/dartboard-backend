@@ -74,8 +74,9 @@ public class TaskProcessor {
 
   /** Schedules the periodic poll that checks for pending tasks across all registered types. */
   void startPolling() {
-    scheduler.scheduleAtFixedRate(
-        this::processPendingTasks, 0, properties.getPollIntervalSeconds(), TimeUnit.SECONDS);
+    var unused =
+        scheduler.scheduleAtFixedRate(
+            this::processPendingTasks, 0, properties.getPollIntervalSeconds(), TimeUnit.SECONDS);
   }
 
   /** Iterates over all registered task types and attempts to claim and dispatch pending tasks. */
@@ -97,14 +98,15 @@ public class TaskProcessor {
       }
       TaskRecord task = claimed.get();
       activeWorkers.add(workerId);
-      workerPool.submit(
-          () -> {
-            try {
-              processTask(task);
-            } finally {
-              activeWorkers.remove(task.getWorkerId().orElse(workerId));
-            }
-          });
+      var unused =
+          workerPool.submit(
+              () -> {
+                try {
+                  processTask(task);
+                } finally {
+                  activeWorkers.remove(task.getWorkerId().orElse(workerId));
+                }
+              });
     }
   }
 

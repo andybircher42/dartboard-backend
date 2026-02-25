@@ -1,6 +1,7 @@
 package com.dartboardbackend.util;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -101,7 +102,7 @@ public final class StringUtils {
    * @return the trimmed, lower-cased string, or {@code ""} if {@code null}
    */
   public static String normalize(String s) {
-    return s == null ? "" : s.trim().toLowerCase();
+    return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
   }
 
   /**
@@ -118,7 +119,7 @@ public final class StringUtils {
    * @return the trimmed, lower-cased string, or {@code ""} if {@code null}
    */
   public static String toLower(String s) {
-    return s == null ? "" : s.trim().toLowerCase();
+    return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
   }
 
   /**
@@ -135,7 +136,7 @@ public final class StringUtils {
    * @return the trimmed, upper-cased string, or {@code ""} if {@code null}
    */
   public static String toUpper(String s) {
-    return s == null ? "" : s.trim().toUpperCase();
+    return s == null ? "" : s.trim().toUpperCase(Locale.ROOT);
   }
 
   /**
