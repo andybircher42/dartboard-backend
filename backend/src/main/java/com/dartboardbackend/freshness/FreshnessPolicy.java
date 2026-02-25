@@ -86,6 +86,6 @@ public class FreshnessPolicy {
 
   @Override
   public String toString() {
-    return name + "[maxAge=" + maxAge + "]";
+    return String.format("%s[maxAge=%s]", name, maxAge);
   }
 }

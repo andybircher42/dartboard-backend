@@ -43,6 +43,7 @@ public record RetryResult<T>(boolean succeeded, T value, int attempts, Exception
     if (succeeded) {
       return value;
     }
-    throw new RuntimeException("All " + attempts + " attempts exhausted", lastException);
+    throw new RuntimeException(
+        String.format("All %d attempts exhausted", attempts), lastException);
   }
 }

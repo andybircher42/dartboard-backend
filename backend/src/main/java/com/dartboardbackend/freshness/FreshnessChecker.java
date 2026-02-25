@@ -66,7 +66,7 @@ public class FreshnessChecker {
     }
 
     return FreshnessResult.stale(
-        timestamp, age, "age " + age + " exceeds max " + policy.getMaxAge());
+        timestamp, age, String.format("age %s exceeds max %s", age, policy.getMaxAge()));
   }
 
   /**
@@ -88,7 +88,7 @@ public class FreshnessChecker {
 
     Optional<Instant> parsed = parseIsoOrLocalDate(isoTimestamp);
     if (parsed.isEmpty()) {
-      return FreshnessResult.stale("unparseable timestamp: " + isoTimestamp);
+      return FreshnessResult.stale(String.format("unparseable timestamp: %s", isoTimestamp));
     }
 
     return check(parsed.get(), policy);
@@ -120,7 +120,8 @@ public class FreshnessChecker {
     if (value instanceof Date date) {
       return check(date.toInstant(), policy);
     }
-    return FreshnessResult.stale("unsupported timestamp type: " + value.getClass().getSimpleName());
+    return FreshnessResult.stale(
+        String.format("unsupported timestamp type: %s", value.getClass().getSimpleName()));
   }
 
   /**

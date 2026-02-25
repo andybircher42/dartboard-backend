@@ -17,7 +17,8 @@ public class RetryPolicy {
   private RetryPolicy(String name, int maxAttempts, long initialBackoffMs, long maxBackoffMs) {
     this.name = Objects.requireNonNull(name, "name must not be null");
     if (maxAttempts < 1) {
-      throw new IllegalArgumentException("maxAttempts must be >= 1, got " + maxAttempts);
+      throw new IllegalArgumentException(
+          String.format("maxAttempts must be >= 1, got %d", maxAttempts));
     }
     this.maxAttempts = maxAttempts;
     this.initialBackoffMs = initialBackoffMs;
@@ -111,13 +112,8 @@ public class RetryPolicy {
 
   @Override
   public String toString() {
-    return name
-        + "[maxAttempts="
-        + maxAttempts
-        + ", initialBackoffMs="
-        + initialBackoffMs
-        + ", maxBackoffMs="
-        + maxBackoffMs
-        + "]";
+    return String.format(
+        "%s[maxAttempts=%d, initialBackoffMs=%d, maxBackoffMs=%d]",
+        name, maxAttempts, initialBackoffMs, maxBackoffMs);
   }
 }

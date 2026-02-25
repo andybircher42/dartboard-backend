@@ -73,6 +73,6 @@ public class Tag {
 
   @Override
   public String toString() {
-    return category + ":" + name;
+    return String.format("%s:%s", category, name);
   }
 }

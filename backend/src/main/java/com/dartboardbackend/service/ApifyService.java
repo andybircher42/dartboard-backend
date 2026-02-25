@@ -88,7 +88,7 @@ public class ApifyService {
       throw result.lastException();
     }
     throw new RuntimeException(
-        "All " + result.attempts() + " attempts exhausted for task " + taskId,
+        String.format("All %d attempts exhausted for task %s", result.attempts(), taskId),
         result.lastException());
   }
 
@@ -125,7 +125,8 @@ public class ApifyService {
     } catch (ApifyRetryableException | ApifyNonRetryableException e) {
       throw e;
     } catch (IOException e) {
-      throw new ApifyRetryableException("Network error during runTask: " + e.getMessage(), e);
+      throw new ApifyRetryableException(
+          String.format("Network error during runTask: %s", e.getMessage()), e);
     }
   }
 
@@ -140,16 +141,18 @@ public class ApifyService {
       JsonNode data = jsonResponse.get("data");
       if (data == null || data.isNull()) {
         throw new ApifyNonRetryableException(
-            "Unexpected response structure: missing 'data' field in getRunStatus for run "
-                + runId,
+            String.format(
+                "Unexpected response structure: missing 'data' field in getRunStatus for run %s",
+                runId),
             statusCode,
             responseBody);
       }
       JsonNode status = data.get("status");
       if (status == null || status.isNull()) {
         throw new ApifyNonRetryableException(
-            "Unexpected response structure: missing 'status' field in getRunStatus for run "
-                + runId,
+            String.format(
+                "Unexpected response structure: missing 'status' field in getRunStatus for run %s",
+                runId),
             statusCode,
             responseBody);
       }
@@ -194,10 +197,9 @@ public class ApifyService {
             e.getMessage());
         if (consecutiveErrors >= MAX_CONSECUTIVE_POLL_ERRORS) {
           throw new RuntimeException(
-              "Polling gave up after "
-                  + MAX_CONSECUTIVE_POLL_ERRORS
-                  + " consecutive errors for run "
-                  + runId,
+              String.format(
+                  "Polling gave up after %d consecutive errors for run %s",
+                  MAX_CONSECUTIVE_POLL_ERRORS, runId),
               e);
         }
       }
@@ -208,7 +210,7 @@ public class ApifyService {
 
     logger.error("Polling timeout after {} seconds for run {}", pollTimeoutSeconds, runId);
     throw new RuntimeException(
-        "Polling timeout after " + pollTimeoutSeconds + " seconds for run " + runId);
+        String.format("Polling timeout after %d seconds for run %s", pollTimeoutSeconds, runId));
   }
 
   /**
@@ -278,10 +280,12 @@ public class ApifyService {
     }
     if (statusCode == 429 || statusCode >= 500) {
       throw new ApifyRetryableException(
-          "Apify returned retryable HTTP " + statusCode, statusCode, responseBody);
+          String.format("Apify returned retryable HTTP %d", statusCode), statusCode, responseBody);
     }
     throw new ApifyNonRetryableException(
-        "Apify returned non-retryable HTTP " + statusCode, statusCode, responseBody);
+        String.format("Apify returned non-retryable HTTP %d", statusCode),
+        statusCode,
+        responseBody);
   }
 
   /**
@@ -298,7 +302,8 @@ public class ApifyService {
   private List<JsonNode> toList(JsonNode results) {
     checkForErrors(results);
     if (!results.isArray()) {
-      throw new RuntimeException("JsonNode run info from Apify is not an array" + results);
+      throw new RuntimeException(
+          String.format("JsonNode run info from Apify is not an array: %s", results));
     }
     return StreamSupport.stream(results.spliterator(), false)
         .peek(this::checkForErrors)
@@ -329,12 +334,15 @@ public class ApifyService {
         return results;
       }
       logger.error("Apify returned error in response: {}", results);
-      throw new ApifyNonRetryableException("caught error in jsonNode: " + results);
+      throw new ApifyNonRetryableException(
+          String.format("caught error in jsonNode: %s", results));
     }
     if (results.has("isValid") && !results.get("isValid").asBoolean()) {
       logger.error("Apify request was invalid: {}", results);
       throw new ApifyNonRetryableException(
-          "The request to Apify was not valid. Cannot retry. " + results.toPrettyString());
+          String.format(
+              "The request to Apify was not valid. Cannot retry. %s",
+              results.toPrettyString()));
     }
     return results;
   }

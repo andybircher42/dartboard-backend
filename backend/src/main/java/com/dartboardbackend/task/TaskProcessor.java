@@ -92,7 +92,7 @@ public class TaskProcessor {
    */
   void claimAndDispatch(String taskType, int limit) {
     for (int i = 0; i < limit; i++) {
-      String workerId = "worker-" + workerIdCounter.incrementAndGet();
+      String workerId = String.format("worker-%d", workerIdCounter.incrementAndGet());
       Optional<TaskRecord> claimed = repository.claimNextPending(taskType, workerId);
       if (claimed.isEmpty()) {
         break;
@@ -120,7 +120,7 @@ public class TaskProcessor {
     TaskHandler handler = handlerMap.get(taskType);
 
     if (handler == null) {
-      String error = "No handler registered for task type: " + taskType;
+      String error = String.format("No handler registered for task type: %s", taskType);
       log.error(error);
       repository.failPermanently(task.getId(), error);
       return;
