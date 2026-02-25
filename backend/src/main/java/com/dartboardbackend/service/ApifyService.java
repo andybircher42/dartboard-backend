@@ -8,8 +8,8 @@ import java.util.stream.StreamSupport;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * fetching, and error classification into retryable vs. non-retryable categories.
  */
 @Service
-@SuppressWarnings("deprecation") // TODO migrate execute(request) to execute(request, handler)
 public class ApifyService {
 
   private static final Logger logger = LoggerFactory.getLogger(ApifyService.class);
@@ -111,21 +110,18 @@ public class ApifyService {
         String.format("%s/actor-tasks/%s/%s?token=%s", apifyApiBase, taskId, runType, apifyToken);
     logger.info("Running actor task: {}/{}", taskId, runType);
 
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+    try {
       HttpPost request = new HttpPost(url);
       request.setHeader("Content-Type", "application/json");
 
       String jsonInput = objectMapper.writeValueAsString(input);
       request.setEntity(new StringEntity(jsonInput));
 
-      try (CloseableHttpResponse response = httpClient.execute(request)) {
-        int statusCode = response.getCode();
-        String responseBody = EntityUtils.toString(response.getEntity());
-        checkHttpStatus(statusCode, responseBody);
+      return executeRequest(request, (statusCode, responseBody) -> {
         JsonNode root = objectMapper.readTree(responseBody);
         logger.info("Run for task {} returned response", taskId);
         return root;
-      }
+      });
     } catch (ApifyRetryableException | ApifyNonRetryableException e) {
       throw e;
     } catch (IOException e) {
@@ -137,33 +133,28 @@ public class ApifyService {
   public String getRunStatus(String runId) throws IOException, ParseException {
     String url = String.format("%s/actor-runs/%s?token=%s", apifyApiBase, runId, apifyToken);
 
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-      HttpGet request = new HttpGet(url);
+    HttpGet request = new HttpGet(url);
 
-      try (CloseableHttpResponse response = httpClient.execute(request)) {
-        int statusCode = response.getCode();
-        String responseBody = EntityUtils.toString(response.getEntity());
-        checkHttpStatus(statusCode, responseBody);
-        JsonNode jsonResponse = objectMapper.readTree(responseBody);
-        JsonNode data = jsonResponse.get("data");
-        if (data == null || data.isNull()) {
-          throw new ApifyNonRetryableException(
-              "Unexpected response structure: missing 'data' field in getRunStatus for run "
-                  + runId,
-              statusCode,
-              responseBody);
-        }
-        JsonNode status = data.get("status");
-        if (status == null || status.isNull()) {
-          throw new ApifyNonRetryableException(
-              "Unexpected response structure: missing 'status' field in getRunStatus for run "
-                  + runId,
-              statusCode,
-              responseBody);
-        }
-        return status.asText();
+    return executeRequest(request, (statusCode, responseBody) -> {
+      JsonNode jsonResponse = objectMapper.readTree(responseBody);
+      JsonNode data = jsonResponse.get("data");
+      if (data == null || data.isNull()) {
+        throw new ApifyNonRetryableException(
+            "Unexpected response structure: missing 'data' field in getRunStatus for run "
+                + runId,
+            statusCode,
+            responseBody);
       }
-    }
+      JsonNode status = data.get("status");
+      if (status == null || status.isNull()) {
+        throw new ApifyNonRetryableException(
+            "Unexpected response structure: missing 'status' field in getRunStatus for run "
+                + runId,
+            statusCode,
+            responseBody);
+      }
+      return status.asText();
+    });
   }
 
   /**
@@ -228,21 +219,16 @@ public class ApifyService {
     String url =
         String.format("%s/actor-runs/%s/dataset/items?token=%s", apifyApiBase, runId, apifyToken);
 
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-      HttpGet request = new HttpGet(url);
+    HttpGet request = new HttpGet(url);
 
-      try (CloseableHttpResponse response = httpClient.execute(request)) {
-        int statusCode = response.getCode();
-        String responseBody = EntityUtils.toString(response.getEntity());
-        checkHttpStatus(statusCode, responseBody);
-        JsonNode root = objectMapper.readTree(responseBody);
-        checkForErrors(root);
-        if (!root.isArray()) {
-          return root;
-        }
-        return StreamSupport.stream(root.spliterator(), false).toList().get(0);
+    return executeRequest(request, (statusCode, responseBody) -> {
+      JsonNode root = objectMapper.readTree(responseBody);
+      checkForErrors(root);
+      if (!root.isArray()) {
+        return root;
       }
-    }
+      return StreamSupport.stream(root.spliterator(), false).toList().get(0);
+    });
   }
 
   /** Fetches the dataset items for the given run as a list, filtering out "no results" entries. */
@@ -250,16 +236,28 @@ public class ApifyService {
     String url =
         String.format("%s/actor-runs/%s/dataset/items?token=%s", apifyApiBase, runId, apifyToken);
 
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-      HttpGet request = new HttpGet(url);
+    HttpGet request = new HttpGet(url);
 
-      try (CloseableHttpResponse response = httpClient.execute(request)) {
+    return executeRequest(request, (statusCode, responseBody) -> {
+      JsonNode root = objectMapper.readTree(responseBody);
+      return toList(root);
+    });
+  }
+
+  @FunctionalInterface
+  interface ResponseParser<T> {
+    T parse(int statusCode, String body) throws IOException, ParseException;
+  }
+
+  private <T> T executeRequest(ClassicHttpRequest request, ResponseParser<T> parser)
+      throws IOException, ParseException {
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      return httpClient.execute(request, response -> {
         int statusCode = response.getCode();
-        String responseBody = EntityUtils.toString(response.getEntity());
-        checkHttpStatus(statusCode, responseBody);
-        JsonNode root = objectMapper.readTree(responseBody);
-        return toList(root);
-      }
+        String body = EntityUtils.toString(response.getEntity());
+        checkHttpStatus(statusCode, body);
+        return parser.parse(statusCode, body);
+      });
     }
   }
 
