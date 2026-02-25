@@ -1,46 +1,43 @@
 package com.bookishbroccoli.tagger;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class TagResultTest {
 
-	private static final Tag LUXURY = Tag.of("luxury", "price", "Luxury");
-	private static final Tag BUDGET = Tag.of("budget", "price", "Budget");
+  private static final Tag LUXURY = Tag.of("luxury", "price", "Luxury");
+  private static final Tag BUDGET = Tag.of("budget", "price", "Budget");
 
-	@Test
-	void strict_filtersStrictOnly() {
-		TagResult result = new TagResult(
-				List.of(LUXURY, BUDGET),
-				Map.of("luxury", "strict", "budget", "relaxed"));
+  @Test
+  void strict_filtersStrictOnly() {
+    TagResult result =
+        new TagResult(List.of(LUXURY, BUDGET), Map.of("luxury", "strict", "budget", "relaxed"));
 
-		assertEquals(List.of(LUXURY), result.strict());
-	}
+    assertEquals(List.of(LUXURY), result.strict());
+  }
 
-	@Test
-	void relaxed_filtersRelaxedOnly() {
-		TagResult result = new TagResult(
-				List.of(LUXURY, BUDGET),
-				Map.of("luxury", "strict", "budget", "relaxed"));
+  @Test
+  void relaxed_filtersRelaxedOnly() {
+    TagResult result =
+        new TagResult(List.of(LUXURY, BUDGET), Map.of("luxury", "strict", "budget", "relaxed"));
 
-		assertEquals(List.of(BUDGET), result.relaxed());
-	}
+    assertEquals(List.of(BUDGET), result.relaxed());
+  }
 
-	@Test
-	void hasTag_true() {
-		TagResult result = new TagResult(List.of(LUXURY), Map.of("luxury", "strict"));
+  @Test
+  void hasTag_true() {
+    TagResult result = new TagResult(List.of(LUXURY), Map.of("luxury", "strict"));
 
-		assertTrue(result.hasTag(LUXURY));
-	}
+    assertTrue(result.hasTag(LUXURY));
+  }
 
-	@Test
-	void hasTag_false() {
-		TagResult result = new TagResult(List.of(LUXURY), Map.of("luxury", "strict"));
+  @Test
+  void hasTag_false() {
+    TagResult result = new TagResult(List.of(LUXURY), Map.of("luxury", "strict"));
 
-		assertFalse(result.hasTag(BUDGET));
-	}
+    assertFalse(result.hasTag(BUDGET));
+  }
 }

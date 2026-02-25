@@ -6,117 +6,194 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Mutable data model representing a long-running job with its execution metadata.
+ *
+ * <p>Each record captures the job's identity, current status, timing information, result count, and
+ * any associated metadata. Use the {@link #create(String, String, Map)} factory method to construct
+ * new instances with sensible defaults.
+ */
 public class JobRecord {
 
-	private String id;
-	private String jobType;
-	private String externalId;
-	private JobStatus status;
-	private Instant startedAt;
-	private Instant finishedAt;
-	private int resultCount;
-	private String error;
-	private Map<String, Object> metadata;
+  private String id;
+  private String jobType;
+  private String externalId;
+  private JobStatus status;
+  private Instant startedAt;
+  private Instant finishedAt;
+  private int resultCount;
+  private String error;
+  private Map<String, Object> metadata;
 
-	public JobRecord() {
-	}
+  public JobRecord() {}
 
-	public static JobRecord create(String jobType, String externalId, Map<String, Object> metadata) {
-		JobRecord record = new JobRecord();
-		record.id = UUID.randomUUID().toString();
-		record.jobType = jobType;
-		record.externalId = externalId;
-		record.status = JobStatus.RUNNING;
-		record.startedAt = Instant.now();
-		record.metadata = Optional.ofNullable(metadata).map(LinkedHashMap::new).orElseGet(LinkedHashMap::new);
-		return record;
-	}
+  /**
+   * Factory method that builds a new {@link JobStatus#RUNNING RUNNING} job with a random UUID.
+   *
+   * @param jobType the logical type of the job (e.g. {@code "actor-sync"})
+   * @param externalId an external identifier associated with this job run
+   * @param metadata optional key-value metadata to attach; may be {@code null}
+   * @return a new {@link JobRecord} in the {@link JobStatus#RUNNING} state
+   */
+  public static JobRecord create(String jobType, String externalId, Map<String, Object> metadata) {
+    JobRecord record = new JobRecord();
+    record.id = UUID.randomUUID().toString();
+    record.jobType = jobType;
+    record.externalId = externalId;
+    record.status = JobStatus.RUNNING;
+    record.startedAt = Instant.now();
+    record.metadata =
+        Optional.ofNullable(metadata).map(LinkedHashMap::new).orElseGet(LinkedHashMap::new);
+    return record;
+  }
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> map = new LinkedHashMap<>();
-		map.put("id", id);
-		map.put("jobType", jobType);
-		map.put("externalId", externalId);
-		map.put("status", Optional.ofNullable(status).map(JobStatus::value).orElse(null));
-		map.put("startedAt", Optional.ofNullable(startedAt).map(Instant::toString).orElse(null));
-		map.put("finishedAt", getFinishedAt().map(Instant::toString).orElse(null));
-		map.put("resultCount", resultCount);
-		map.put("error", getError().orElse(null));
-		map.put("metadata", getMetadata().orElse(null));
-		return map;
-	}
+  /**
+   * Serializes this record to an ordered map suitable for JSON responses.
+   *
+   * <p>The map preserves insertion order and includes all fields, with {@code null} values for
+   * fields that are not set.
+   *
+   * @return an ordered {@link Map} representation of this record
+   */
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("id", id);
+    map.put("jobType", jobType);
+    map.put("externalId", externalId);
+    map.put("status", Optional.ofNullable(status).map(JobStatus::value).orElse(null));
+    map.put("startedAt", Optional.ofNullable(startedAt).map(Instant::toString).orElse(null));
+    map.put("finishedAt", getFinishedAt().map(Instant::toString).orElse(null));
+    map.put("resultCount", resultCount);
+    map.put("error", getError().orElse(null));
+    map.put("metadata", getMetadata().orElse(null));
+    return map;
+  }
 
-	// Getters and setters
+  // Getters and setters
 
-	public String getId() {
-		return id;
-	}
+  /**
+   * Returns the unique identifier for this job.
+   *
+   * @return the job ID
+   */
+  public String getId() {
+    return id;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  /** Sets the unique identifier for this job. */
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	public String getJobType() {
-		return jobType;
-	}
+  /**
+   * Returns the logical type of this job.
+   *
+   * @return the job type
+   */
+  public String getJobType() {
+    return jobType;
+  }
 
-	public void setJobType(String jobType) {
-		this.jobType = jobType;
-	}
+  /** Sets the logical type of this job. */
+  public void setJobType(String jobType) {
+    this.jobType = jobType;
+  }
 
-	public String getExternalId() {
-		return externalId;
-	}
+  /**
+   * Returns the external identifier associated with this job.
+   *
+   * @return the external ID
+   */
+  public String getExternalId() {
+    return externalId;
+  }
 
-	public void setExternalId(String externalId) {
-		this.externalId = externalId;
-	}
+  /** Sets the external identifier associated with this job. */
+  public void setExternalId(String externalId) {
+    this.externalId = externalId;
+  }
 
-	public JobStatus getStatus() {
-		return status;
-	}
+  /**
+   * Returns the current status of this job.
+   *
+   * @return the job status
+   */
+  public JobStatus getStatus() {
+    return status;
+  }
 
-	public void setStatus(JobStatus status) {
-		this.status = status;
-	}
+  /** Sets the current status of this job. */
+  public void setStatus(JobStatus status) {
+    this.status = status;
+  }
 
-	public Instant getStartedAt() {
-		return startedAt;
-	}
+  /**
+   * Returns the instant when this job started.
+   *
+   * @return the start time
+   */
+  public Instant getStartedAt() {
+    return startedAt;
+  }
 
-	public void setStartedAt(Instant startedAt) {
-		this.startedAt = startedAt;
-	}
+  /** Sets the instant when this job started. */
+  public void setStartedAt(Instant startedAt) {
+    this.startedAt = startedAt;
+  }
 
-	public Optional<Instant> getFinishedAt() {
-		return Optional.ofNullable(finishedAt);
-	}
+  /**
+   * Returns the instant when this job finished, if available.
+   *
+   * @return an {@link Optional} containing the finish time, or empty if the job has not finished
+   */
+  public Optional<Instant> getFinishedAt() {
+    return Optional.ofNullable(finishedAt);
+  }
 
-	public void setFinishedAt(Instant finishedAt) {
-		this.finishedAt = finishedAt;
-	}
+  /** Sets the instant when this job finished. */
+  public void setFinishedAt(Instant finishedAt) {
+    this.finishedAt = finishedAt;
+  }
 
-	public int getResultCount() {
-		return resultCount;
-	}
+  /**
+   * Returns the number of results produced by this job.
+   *
+   * @return the result count
+   */
+  public int getResultCount() {
+    return resultCount;
+  }
 
-	public void setResultCount(int resultCount) {
-		this.resultCount = resultCount;
-	}
+  /** Sets the number of results produced by this job. */
+  public void setResultCount(int resultCount) {
+    this.resultCount = resultCount;
+  }
 
-	public Optional<String> getError() {
-		return Optional.ofNullable(error);
-	}
+  /**
+   * Returns the error message for a failed job, if available.
+   *
+   * @return an {@link Optional} containing the error message, or empty if no error is set
+   */
+  public Optional<String> getError() {
+    return Optional.ofNullable(error);
+  }
 
-	public void setError(String error) {
-		this.error = error;
-	}
+  /** Sets the error message for a failed job. */
+  public void setError(String error) {
+    this.error = error;
+  }
 
-	public Optional<Map<String, Object>> getMetadata() {
-		return Optional.ofNullable(metadata);
-	}
+  /**
+   * Returns the metadata map associated with this job, if available.
+   *
+   * @return an {@link Optional} containing the metadata map, or empty if no metadata is set
+   */
+  public Optional<Map<String, Object>> getMetadata() {
+    return Optional.ofNullable(metadata);
+  }
 
-	public void setMetadata(Map<String, Object> metadata) {
-		this.metadata = metadata;
-	}
+  /** Sets the metadata map associated with this job. */
+  public void setMetadata(Map<String, Object> metadata) {
+    this.metadata = metadata;
+  }
 }
