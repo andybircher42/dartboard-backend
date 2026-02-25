@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
  * TaskHandlers} via a worker pool, and manages task lifecycle (completion, failure, recovery).
  */
 @Service
+@SuppressWarnings("unused") // var unused captures Future returns required by Error Prone
 public class TaskProcessor {
 
   private static final Logger log = LoggerFactory.getLogger(TaskProcessor.class);

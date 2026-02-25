@@ -1,15 +1,10 @@
 package com.dartboardbackend.service;
 
-import com.dartboardbackend.retry.NonRetryableException;
-import com.dartboardbackend.retry.RetryExecutor;
-import com.dartboardbackend.retry.RetryPolicy;
-import com.dartboardbackend.retry.RetryResult;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
+
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -23,6 +18,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.dartboardbackend.retry.NonRetryableException;
+import com.dartboardbackend.retry.RetryExecutor;
+import com.dartboardbackend.retry.RetryPolicy;
+import com.dartboardbackend.retry.RetryResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Central service for communicating with the Apify API.
  *
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
  * fetching, and error classification into retryable vs. non-retryable categories.
  */
 @Service
+@SuppressWarnings("deprecation") // TODO migrate execute(request) to execute(request, handler)
 public class ApifyService {
 
   private static final Logger logger = LoggerFactory.getLogger(ApifyService.class);

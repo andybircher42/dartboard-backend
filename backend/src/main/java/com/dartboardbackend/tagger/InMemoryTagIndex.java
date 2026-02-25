@@ -68,6 +68,7 @@ public class InMemoryTagIndex implements TagIndex {
 
   /** {@inheritDoc} */
   @Override
+  @SuppressWarnings("null") // Integer::sum unboxing is safe — merge never passes null to remapper
   public Map<Tag, Integer> getTagCounts() {
     Map<Tag, Integer> counts = new LinkedHashMap<>();
     for (Map.Entry<String, Set<Tag>> entry : itemToTags.entrySet()) {
