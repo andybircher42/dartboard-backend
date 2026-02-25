@@ -1,5 +1,6 @@
 package com.dartboardbackend.filter;
 
+import static com.dartboardbackend.util.ValidationUtils.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Optional;
 
@@ -23,7 +24,11 @@ public class RangeFilter implements FilterRule {
    * @param max maximum inclusive bound, or {@code null} for unbounded
    */
   public RangeFilter(String fieldPath, Double min, Double max) {
+    validateFieldPath(fieldPath);
     this.fieldPath = fieldPath;
+    if (min != null && max != null) {
+      checkArgument(min < max, "min [%s] must be less than max [%s]", min, max);
+    }
     this.min = min;
     this.max = max;
   }
@@ -81,20 +86,20 @@ public class RangeFilter implements FilterRule {
   }
 
   /**
-   * Returns the minimum bound, or {@code null} if unbounded.
+   * Returns the minimum bound, or empty if unbounded.
    *
-   * @return the minimum inclusive bound, or null
+   * @return an {@link Optional} containing the minimum inclusive bound, or empty
    */
-  public Double getMin() {
-    return min;
+  public Optional<Double> getMin() {
+    return Optional.ofNullable(min);
   }
 
   /**
-   * Returns the maximum bound, or {@code null} if unbounded.
+   * Returns the maximum bound, or empty if unbounded.
    *
-   * @return the maximum inclusive bound, or null
+   * @return an {@link Optional} containing the maximum inclusive bound, or empty
    */
-  public Double getMax() {
-    return max;
+  public Optional<Double> getMax() {
+    return Optional.ofNullable(max);
   }
 }

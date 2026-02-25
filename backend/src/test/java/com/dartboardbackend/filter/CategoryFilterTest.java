@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class CategoryFilterTest {
@@ -281,86 +279,6 @@ class CategoryFilterTest {
     CategoryFilter rule = new CategoryFilter("details.category", "  ", TYPE_ALIASES);
 
     assertTrue(rule.matches(item("ANYTHING")));
-  }
-
-  // ==================== validateField ====================
-
-  @Nested
-  class ValidateFieldTests {
-
-    private static final Pattern LETTERS_ONLY = Pattern.compile("[a-zA-Z]+");
-    private static final Pattern LETTERS_AND_DOTS = Pattern.compile("[a-zA-Z.]+");
-    private static final Pattern LETTERS_AND_UNDERSCORES = Pattern.compile("[a-zA-Z_]+");
-
-    @Test
-    void validValue_doesNotThrow() {
-      assertDoesNotThrow(() -> CategoryFilter.validateField("hello", LETTERS_ONLY));
-    }
-
-    @Test
-    void validValue_withDots() {
-      assertDoesNotThrow(() -> CategoryFilter.validateField("details.category", LETTERS_AND_DOTS));
-    }
-
-    @Test
-    void validValue_withUnderscores() {
-      assertDoesNotThrow(
-          () -> CategoryFilter.validateField("SINGLE_FAMILY", LETTERS_AND_UNDERSCORES));
-    }
-
-    @Test
-    void validValue_trimsBeforeMatching() {
-      assertDoesNotThrow(() -> CategoryFilter.validateField("  hello  ", LETTERS_ONLY));
-    }
-
-    @Test
-    void null_throws() {
-      IllegalArgumentException ex =
-          assertThrows(
-              IllegalArgumentException.class,
-              () -> CategoryFilter.validateField(null, LETTERS_ONLY));
-
-      assertTrue(ex.getMessage().contains("null"));
-    }
-
-    @Test
-    void empty_throws() {
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> CategoryFilter.validateField("", LETTERS_ONLY));
-    }
-
-    @Test
-    void whitespaceOnly_throws() {
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> CategoryFilter.validateField("   ", LETTERS_ONLY));
-    }
-
-    @Test
-    void invalidChars_throws() {
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> CategoryFilter.validateField("hello123", LETTERS_ONLY));
-    }
-
-    @Test
-    void dotNotAllowedByLettersOnly_throws() {
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> CategoryFilter.validateField("a.b", LETTERS_ONLY));
-    }
-
-    @Test
-    void messageIncludesPatternAndValue() {
-      IllegalArgumentException ex =
-          assertThrows(
-              IllegalArgumentException.class,
-              () -> CategoryFilter.validateField("bad!value", LETTERS_ONLY));
-
-      assertTrue(ex.getMessage().contains(LETTERS_ONLY.toString()));
-      assertTrue(ex.getMessage().contains("bad!value"));
-    }
   }
 
   // ==================== expandAliases ====================

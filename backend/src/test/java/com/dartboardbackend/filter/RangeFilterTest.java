@@ -95,6 +95,52 @@ class RangeFilterTest {
     assertTrue(rule.matches(item(999999999)));
   }
 
+  // ==================== field path validation ====================
+
+  @Test
+  void nullFieldPath_throws() {
+    assertThrows(IllegalArgumentException.class, () -> new RangeFilter(null, 0.0, 100.0));
+  }
+
+  @Test
+  void emptyFieldPath_throws() {
+    assertThrows(IllegalArgumentException.class, () -> new RangeFilter("", 0.0, 100.0));
+  }
+
+  @Test
+  void fieldPathWithNumbers_throws() {
+    assertThrows(IllegalArgumentException.class, () -> new RangeFilter("field123", 0.0, 100.0));
+  }
+
+  @Test
+  void fieldPathWithSpecialChars_throws() {
+    assertThrows(IllegalArgumentException.class, () -> new RangeFilter("field@name", 0.0, 100.0));
+  }
+
+  @Test
+  void validDottedFieldPath_accepted() {
+    assertDoesNotThrow(() -> new RangeFilter("details.price", 0.0, 100.0));
+  }
+
+  // ==================== min/max validation ====================
+
+  @Test
+  void minGreaterThanMax_throws() {
+    assertThrows(
+        IllegalArgumentException.class, () -> new RangeFilter("price", 500000.0, 300000.0));
+  }
+
+  @Test
+  void minEqualsMax_throws() {
+    assertThrows(
+        IllegalArgumentException.class, () -> new RangeFilter("price", 300000.0, 300000.0));
+  }
+
+  @Test
+  void minLessThanMax_accepted() {
+    assertDoesNotThrow(() -> new RangeFilter("price", 100.0, 500.0));
+  }
+
   // ==================== resolveField ====================
 
   @Test

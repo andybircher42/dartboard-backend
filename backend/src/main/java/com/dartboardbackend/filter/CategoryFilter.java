@@ -1,5 +1,8 @@
 package com.dartboardbackend.filter;
 
+import static com.dartboardbackend.util.ValidationUtils.*;
+
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +13,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.dartboardbackend.util.StringUtils;
+import com.dartboardbackend.util.ValidationUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -69,9 +73,6 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public class CategoryFilter implements FilterRule {
 
-  /** Letters and dots only — e.g. {@code "homeInfo.homeType"}. */
-  private static final Pattern FIELD_PATH_PATTERN = Pattern.compile("[a-zA-Z.]+");
-
   /** Letters and underscores only — e.g. {@code "SINGLE_FAMILY"}. */
   private static final Pattern ALLOWED_VALUE_PATTERN = Pattern.compile("[a-zA-Z_]+");
 
@@ -127,28 +128,9 @@ public class CategoryFilter implements FilterRule {
     this(fieldPath, expandAliases(categories, aliasMap));
   }
 
-  private static void validateFieldPath(String fieldPath) {
-    validateField(fieldPath, FIELD_PATH_PATTERN);
-  }
-
   private static void validateAllowedValues(Set<String> allowedValues) {
     for (String value : allowedValues) {
-      validateField(value, ALLOWED_VALUE_PATTERN);
-    }
-  }
-
-  /**
-   * Validates that a value is non-null and, after trimming, fully matches the given pattern.
-   *
-   * @param value the value to validate (may be {@code null})
-   * @param pattern the regex pattern the trimmed value must fully match
-   * @throws IllegalArgumentException if {@code value} is null, blank after trimming, or contains
-   *     characters not permitted by the pattern
-   */
-  static void validateField(String value, Pattern pattern) {
-    if (value == null || !pattern.matcher(value.trim()).matches()) {
-      throw new IllegalArgumentException(
-          String.format("field must match [%s], got: %s", pattern, value));
+      ValidationUtils.validatePattern(value, ALLOWED_VALUE_PATTERN);
     }
   }
 
