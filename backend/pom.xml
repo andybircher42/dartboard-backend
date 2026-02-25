@@ -12,10 +12,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.bookishbroccoli</groupId>
-    <artifactId>bookish-broccoli-backend</artifactId>
+    <groupId>com.dartboardbackend</groupId>
+    <artifactId>dartboard-backend</artifactId>
     <version>1.0.0</version>
-    <name>Bookish Broccoli Backend</name>
+    <name>Dartboard Backend</name>
     <description>Generic Apify integration service</description>
 
     <properties>

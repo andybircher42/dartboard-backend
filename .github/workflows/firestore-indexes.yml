@@ -81,7 +81,7 @@ jobs:
       - name: Deploy Firestore indexes
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only firestore:indexes --project bookish-broccoli
+          args: deploy --only firestore:indexes --project dartboard-backend
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_PATH: backend
