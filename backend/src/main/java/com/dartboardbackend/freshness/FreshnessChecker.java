@@ -67,29 +67,6 @@ public class FreshnessChecker {
         timestamp, age, String.format("age %s exceeds max %s", age, policy.getMaxAge()));
   }
 
-  // /**
-  //  * Checks an ISO-8601 or {@link LocalDate} string against the given policy.
-  //  *
-  //  * <p>Blank or {@code null} strings delegate to the policy's {@link
-  //  * FreshnessPolicy#isStaleWhenMissing()} setting. Unparseable strings are treated as stale.
-  //  *
-  //  * @param isoTimestamp the timestamp string to check, or {@code null} if unavailable
-  //  * @param policy the freshness policy to evaluate against
-  //  * @return the result of the freshness check
-  //  */
-  // public FreshnessResult check(String isoTimestamp, FreshnessPolicy policy) {
-  //   if (isoTimestamp == null || isoTimestamp.isBlank()) {
-  //     return missingTimestamp(policy);
-  //   }
-
-  //   Optional<Instant> parsed = parseIsoOrLocalDate(isoTimestamp);
-  //   if (parsed.isEmpty()) {
-  //     return FreshnessResult.stale(String.format("unparseable timestamp: %s", isoTimestamp));
-  //   }
-
-  //   return check(parsed.get(), policy);
-  // }
-
   /**
    * Polymorphic check that dispatches to the appropriate overload based on runtime type.
    *
