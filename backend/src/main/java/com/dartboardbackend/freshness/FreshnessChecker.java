@@ -50,9 +50,7 @@ public class FreshnessChecker {
    */
   public FreshnessResult check(Instant timestamp, FreshnessPolicy policy) {
     if (timestamp == null) {
-      return policy.isStaleWhenMissing()
-          ? FreshnessResult.stale("no timestamp available")
-          : FreshnessResult.fresh(null, null);
+      return missingTimestamp(policy);
     }
 
     Instant now = clock.instant();
@@ -69,30 +67,28 @@ public class FreshnessChecker {
         timestamp, age, String.format("age %s exceeds max %s", age, policy.getMaxAge()));
   }
 
-  /**
-   * Checks an ISO-8601 or {@link LocalDate} string against the given policy.
-   *
-   * <p>Blank or {@code null} strings delegate to the policy's {@link
-   * FreshnessPolicy#isStaleWhenMissing()} setting. Unparseable strings are treated as stale.
-   *
-   * @param isoTimestamp the timestamp string to check, or {@code null} if unavailable
-   * @param policy the freshness policy to evaluate against
-   * @return the result of the freshness check
-   */
-  public FreshnessResult check(String isoTimestamp, FreshnessPolicy policy) {
-    if (isoTimestamp == null || isoTimestamp.isBlank()) {
-      return policy.isStaleWhenMissing()
-          ? FreshnessResult.stale("no timestamp available")
-          : FreshnessResult.fresh(null, null);
-    }
+  // /**
+  //  * Checks an ISO-8601 or {@link LocalDate} string against the given policy.
+  //  *
+  //  * <p>Blank or {@code null} strings delegate to the policy's {@link
+  //  * FreshnessPolicy#isStaleWhenMissing()} setting. Unparseable strings are treated as stale.
+  //  *
+  //  * @param isoTimestamp the timestamp string to check, or {@code null} if unavailable
+  //  * @param policy the freshness policy to evaluate against
+  //  * @return the result of the freshness check
+  //  */
+  // public FreshnessResult check(String isoTimestamp, FreshnessPolicy policy) {
+  //   if (isoTimestamp == null || isoTimestamp.isBlank()) {
+  //     return missingTimestamp(policy);
+  //   }
 
-    Optional<Instant> parsed = parseIsoOrLocalDate(isoTimestamp);
-    if (parsed.isEmpty()) {
-      return FreshnessResult.stale(String.format("unparseable timestamp: %s", isoTimestamp));
-    }
+  //   Optional<Instant> parsed = parseIsoOrLocalDate(isoTimestamp);
+  //   if (parsed.isEmpty()) {
+  //     return FreshnessResult.stale(String.format("unparseable timestamp: %s", isoTimestamp));
+  //   }
 
-    return check(parsed.get(), policy);
-  }
+  //   return check(parsed.get(), policy);
+  // }
 
   /**
    * Polymorphic check that dispatches to the appropriate overload based on runtime type.
@@ -106,22 +102,15 @@ public class FreshnessChecker {
    */
   public FreshnessResult check(Object value, FreshnessPolicy policy) {
     if (value == null) {
-      return check((Instant) null, policy);
-    }
-    if (value instanceof Instant instant) {
-      return check(instant, policy);
-    }
-    if (value instanceof String s) {
-      return check(s, policy);
-    }
-    if (value instanceof Long epochMillis) {
-      return check(Instant.ofEpochMilli(epochMillis), policy);
-    }
-    if (value instanceof Date date) {
-      return check(date.toInstant(), policy);
-    }
-    return FreshnessResult.stale(
-        String.format("unsupported timestamp type: %s", value.getClass().getSimpleName()));
+      return missingTimestamp(policy);
+    } 
+    return parseTimestamp(value)
+        .map(ts -> check(ts, policy))
+        .orElseGet(
+            () ->
+                FreshnessResult.stale(
+                    String.format(
+                        "unsupported or unparseable timestamp of type: %s::%s", value.getClass().getSimpleName(), value)));
   }
 
   /**
@@ -207,6 +196,13 @@ public class FreshnessChecker {
       return parseIsoOrLocalDate(s);
     }
     return Optional.empty();
+  }
+
+  /** Returns a stale or fresh result for a missing timestamp, based on the policy. */
+  private static FreshnessResult missingTimestamp(FreshnessPolicy policy) {
+    return policy.isStaleWhenMissing()
+        ? FreshnessResult.stale("no timestamp available")
+        : FreshnessResult.fresh(null, null);
   }
 
   /**
